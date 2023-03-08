@@ -119,6 +119,22 @@ impl<'a> SstFileMetaData<'a> {
             slice::from_raw_parts(ptr as *const u8, len)
         }
     }
+    
+    pub fn get_checksum(&self) -> String {
+        let mut len: size_t = 0;
+        unsafe {
+            let ptr = crocksdb_ffi::crocksdb_sst_file_meta_data_checksum(self.inner, &mut len);
+            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        }
+    }
+
+    pub fn get_checksum_function(&self) -> String {
+        let mut len: size_t = 0;
+        unsafe {
+            let ptr = crocksdb_ffi::crocksdb_sst_file_meta_data_checksum_function(self.inner, &mut len);
+            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        }
+    }
 }
 
 pub struct LiveFiles {

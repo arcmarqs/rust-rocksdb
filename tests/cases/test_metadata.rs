@@ -12,7 +12,7 @@
 // limitations under the License.
 
 use rocksdb::{
-    CFHandle, ColumnFamilyOptions, CompactionOptions, DBCompressionType, DBOptions, Writable, DB,
+    CFHandle, ColumnFamilyOptions, CompactionOptions, DBCompressionType, DBOptions, Writable, DB
 };
 
 use super::tempdir_with_prefix;
@@ -37,7 +37,7 @@ fn test_metadata() {
         db.put(&[i], &[i]).unwrap();
         db.flush(true).unwrap();
     }
-
+    
     let live_files = db.get_live_files();
     let files_count = live_files.get_files_count();
     assert_eq!(files_count as u8, num_files);
@@ -46,7 +46,7 @@ fn test_metadata() {
         assert_eq!(live_files.get_smallestkey(i), [num_files - 1 - i as u8]);
         assert_eq!(live_files.get_largestkey(i), [num_files - 1 - i as u8]);
     }
-
+    
     let cf_meta = db.get_column_family_meta_data(cf_handle);
     let cf_levels = cf_meta.get_levels();
     assert_eq!(cf_levels.len(), 7);
@@ -58,6 +58,8 @@ fn test_metadata() {
         }
         assert_eq!(files.len(), num_files as usize);
         for f in files {
+            assert_eq!(f.get_checksum(),format!(""));
+            assert_eq!(f.get_checksum_function(), format!("Unknown"));
             assert!(f.get_size() > 0);
             assert!(f.get_name().len() > 0);
             assert!(f.get_smallestkey().len() > 0);
