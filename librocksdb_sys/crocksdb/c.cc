@@ -28,6 +28,7 @@
 #include "rocksdb/env_encryption.h"
 #include "rocksdb/env_inspected.h"
 #include "rocksdb/file_system.h"
+#include "rocksdb/file_checksum.h"
 #include "rocksdb/filter_policy.h"
 #include "rocksdb/iostats_context.h"
 #include "rocksdb/iterator.h"
@@ -191,6 +192,8 @@ using rocksdb::SstFileMetaData;
 using rocksdb::TableReader;
 using rocksdb::TableReaderOptions;
 using rocksdb::VectorRepFactory;
+using rocksdb::FileChecksumGenFactory;
+
 
 using rocksdb::kMaxSequenceNumber;
 
@@ -2905,6 +2908,11 @@ void crocksdb_options_get_compression_per_level(crocksdb_options_t* opt,
   for (size_t i = 0; i < opt->rep.compression_per_level.size(); i++) {
     level_values[i] = static_cast<int>(opt->rep.compression_per_level[i]);
   }
+}
+
+void crocksdb_options_set_file_checksum_gen_factory(crocksdb_options_t* opt) {
+  std::shared_ptr<FileChecksumGenFactory> factory = rocksdb::GetFileChecksumGenCrc32cFactory();
+  opt->rep.file_checksum_gen_factory.swap(factory);
 }
 
 void crocksdb_options_set_compression_options(crocksdb_options_t* opt,
@@ -5833,7 +5841,8 @@ const char* crocksdb_sst_file_meta_data_largestkey(
 }
 
 const char* crocksdb_sst_file_meta_data_checksum(
-    const crocksdb_sst_file_meta_data_t* meta) {
+    const crocksdb_sst_file_meta_data_t* meta, size_t* len) {
+      *len = meta->rep.file_checksum.size();
   return meta->rep.file_checksum.data();
 }
 

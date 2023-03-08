@@ -932,6 +932,7 @@ extern "C" {
     pub fn crocksdb_options_set_force_consistency_checks(options: *mut Options, v: bool);
     pub fn crocksdb_options_get_force_consistency_checks(options: *mut Options) -> bool;
     pub fn crocksdb_options_set_ratelimiter(options: *mut Options, limiter: *mut DBRateLimiter);
+    pub fn crocksdb_options_set_file_checksum_gen_factory(options: *mut Options);
     pub fn crocksdb_options_get_ratelimiter(options: *mut Options) -> *mut DBRateLimiter;
     pub fn crocksdb_options_set_info_log(options: *mut Options, logger: *mut DBLogger);
     pub fn crocksdb_options_get_block_cache_usage(options: *const Options) -> usize;
@@ -2487,14 +2488,12 @@ extern "C" {
         len: *mut size_t,
     ) -> *const c_char;
     pub fn crocksdb_sst_file_meta_data_checksum(
-        meta: *const DBSstFileMetaData,
-        len: *mut size_t,
+        meta: *const DBSstFileMetaData, 
+        len: *mut size_t
     ) -> *const c_char;
     pub fn crocksdb_sst_file_meta_data_checksum_function(
-        meta: *const DBSstFileMetaData,
-        len: *mut size_t,
+        meta: *const DBSstFileMetaData
     ) -> *const c_char;
-
     pub fn crocksdb_livefiles(db: *mut DBInstance) -> *mut DBLivefiles;
     pub fn crocksdb_livefiles_count(lf: *const DBLivefiles) -> size_t;
     pub fn crocksdb_livefiles_size(lf: *const DBLivefiles, index: i32) -> size_t;

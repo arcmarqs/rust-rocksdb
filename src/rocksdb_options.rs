@@ -1182,6 +1182,12 @@ impl DBOptions {
         }
     }
 
+    pub fn set_file_checksum_gen_factory(&mut self) {
+        unsafe {
+            crocksdb_ffi::crocksdb_options_set_file_checksum_gen_factory(self.inner);
+        }
+    }
+
     pub fn get_rate_limiter(&self) -> Option<RateLimiter> {
         let limiter = unsafe { crocksdb_ffi::crocksdb_options_get_ratelimiter(self.inner) };
         if limiter.is_null() {

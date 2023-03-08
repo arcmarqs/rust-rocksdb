@@ -120,18 +120,17 @@ impl<'a> SstFileMetaData<'a> {
         }
     }
     
-    pub fn get_checksum(&self) -> String {
+    pub fn get_checksum(&self) -> &[u8] {
         let mut len: size_t = 0;
         unsafe {
             let ptr = crocksdb_ffi::crocksdb_sst_file_meta_data_checksum(self.inner, &mut len);
-            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+            slice::from_raw_parts(ptr as *const u8, len)
         }
     }
 
     pub fn get_checksum_function(&self) -> String {
-        let mut len: size_t = 0;
         unsafe {
-            let ptr = crocksdb_ffi::crocksdb_sst_file_meta_data_checksum_function(self.inner, &mut len);
+            let ptr = crocksdb_ffi::crocksdb_sst_file_meta_data_checksum_function(self.inner);
             CStr::from_ptr(ptr).to_string_lossy().into_owned()
         }
     }

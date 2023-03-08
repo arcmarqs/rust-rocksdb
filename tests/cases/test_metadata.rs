@@ -12,7 +12,7 @@
 // limitations under the License.
 
 use rocksdb::{
-    CFHandle, ColumnFamilyOptions, CompactionOptions, DBCompressionType, DBOptions, Writable, DB
+    CFHandle, ColumnFamilyOptions, CompactionOptions, DBCompressionType, DBOptions, Writable, DB,
 };
 
 use super::tempdir_with_prefix;
@@ -22,6 +22,7 @@ fn test_metadata() {
     let path = tempdir_with_prefix("_rust_rocksdb_test_metadata");
     let mut opts = DBOptions::new();
     opts.create_if_missing(true);
+    opts.set_file_checksum_gen_factory();
     let mut cf_opts = ColumnFamilyOptions::new();
     cf_opts.set_disable_auto_compactions(true);
     let db = DB::open_cf(
@@ -58,8 +59,8 @@ fn test_metadata() {
         }
         assert_eq!(files.len(), num_files as usize);
         for f in files {
-            assert_eq!(f.get_checksum(),format!(""));
-            assert_eq!(f.get_checksum_function(), format!("Unknown"));
+            assert!(f.get_checksum().len() > 0);
+            assert_eq!(f.get_checksum_function(),format!("FileChecksumCrc32c"));
             assert!(f.get_size() > 0);
             assert!(f.get_name().len() > 0);
             assert!(f.get_smallestkey().len() > 0);
