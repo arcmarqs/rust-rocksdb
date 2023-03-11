@@ -138,6 +138,10 @@ pub struct DBTablePropertiesCollectorFactory(c_void);
 #[repr(C)]
 pub struct DBFlushJobInfo(c_void);
 #[repr(C)]
+pub struct DBTableFileCreationInfo(c_void);
+#[repr(C)]
+pub struct DBTableFileDeletionInfo(c_void);
+#[repr(C)]
 pub struct DBCompactionJobInfo(c_void);
 #[repr(C)]
 pub struct DBSubcompactionJobInfo(c_void);
@@ -2297,6 +2301,41 @@ extern "C" {
 
     pub fn crocksdb_reset_status(ptr: *mut DBStatusPtr);
 
+    pub fn crocksdb_tablefilecreationinfo_db_name(
+        info: *const DBTableFileCreationInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefilecreationinfo_cf_name(
+        info: *const DBTableFileCreationInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefilecreationinfo_file_path(
+        info: *const DBTableFileCreationInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefilecreationinfo_job_id(
+        info: *const DBTableFileCreationInfo,
+    ) -> c_int;
+    pub fn crocksdb_tablefilecreationinfo_reason(
+        info: *const DBTableFileCreationInfo,
+    ) -> DBTableFileCreationReason;
+    pub fn crocksdb_tablefilecreationinfo_file_size(info: *const DBTableFileCreationInfo) -> u64;
+    pub fn crocksdb_tablefilecreationinfo_table_properties(
+        info: *const DBTableFileCreationInfo,
+    ) -> *const DBTableProperties;
+    pub fn crocksdb_tablefilecreationinfo_status(
+        info: *const DBTableFileCreationInfo,
+        errptr: *mut *mut c_char,
+    );
+    pub fn crocksdb_tablefilecreationinfo_file_checksum(
+        info: *const DBTableFileCreationInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefilecreationinfo_checksum_func_name(
+        info: *const DBTableFileCreationInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+
     pub fn crocksdb_compactionjobinfo_status(
         info: *const DBCompactionJobInfo,
         errptr: *mut *mut c_char,
@@ -2392,6 +2431,7 @@ extern "C" {
         destructor: extern "C" fn(*mut c_void),
         flush_begin: extern "C" fn(*mut c_void, *mut DBInstance, *const DBFlushJobInfo),
         flush_completed: extern "C" fn(*mut c_void, *mut DBInstance, *const DBFlushJobInfo),
+        tablefile_created: extern "C" fn(*mut c_void, *const DBTableFileCreationInfo),
         compact_begin: extern "C" fn(*mut c_void, *mut DBInstance, *const DBCompactionJobInfo),
         compact_completed: extern "C" fn(*mut c_void, *mut DBInstance, *const DBCompactionJobInfo),
         subcompact_begin: extern "C" fn(*mut c_void, *const DBSubcompactionJobInfo),
@@ -2488,11 +2528,11 @@ extern "C" {
         len: *mut size_t,
     ) -> *const c_char;
     pub fn crocksdb_sst_file_meta_data_checksum(
-        meta: *const DBSstFileMetaData, 
-        len: *mut size_t
+        meta: *const DBSstFileMetaData,
+        len: *mut size_t,
     ) -> *const c_char;
     pub fn crocksdb_sst_file_meta_data_checksum_function(
-        meta: *const DBSstFileMetaData
+        meta: *const DBSstFileMetaData,
     ) -> *const c_char;
     pub fn crocksdb_livefiles(db: *mut DBInstance) -> *mut DBLivefiles;
     pub fn crocksdb_livefiles_count(lf: *const DBLivefiles) -> size_t;

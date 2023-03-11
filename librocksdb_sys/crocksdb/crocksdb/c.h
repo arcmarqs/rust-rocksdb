@@ -139,6 +139,9 @@ typedef struct crocksdb_table_properties_collection_iterator_t
     crocksdb_table_properties_collection_iterator_t;
 typedef struct crocksdb_table_properties_collector_t
     crocksdb_table_properties_collector_t;
+typedef struct crocksdb_tablefile_creation_reason_t tablefile_creation_reason_t;
+typedef struct crocksdb_tablefilecreationinfo_t crocksdb_tablefilecreationinfo_t;
+typedef struct crocksdb_tablefiledeletioninfo_t crocksdb_tablefiledeletioninfo_t;
 typedef struct crocksdb_table_properties_collector_factory_t
     crocksdb_table_properties_collector_factory_t;
 typedef struct crocksdb_flushjobinfo_t crocksdb_flushjobinfo_t;
@@ -882,6 +885,34 @@ crocksdb_flushjobinfo_smallest_seqno(const crocksdb_flushjobinfo_t*);
 extern C_ROCKSDB_LIBRARY_API void crocksdb_reset_status(
     crocksdb_status_ptr_t* status_ptr);
 
+/* Table Created info*/
+
+extern C_ROCKSDB_LIBRARY_API const char* crocksdb_tablefilecreationinfo_db_name(
+    const crocksdb_tablefilecreationinfo_t*, size_t*);
+extern C_ROCKSDB_LIBRARY_API const char* crocksdb_tablefilecreationinfo_cf_name(
+    const crocksdb_tablefilecreationinfo_t*, size_t*);
+extern C_ROCKSDB_LIBRARY_API const char*
+crocksdb_tablefilecreationinfo_file_path(
+    const crocksdb_tablefilecreationinfo_t*, size_t);
+extern C_ROCKSDB_LIBRARY_API const int croksdb_tablefilecreationinfo_job_id(
+    const crocksdb_tablefilecreationinfo_t*);
+extern C_ROCKSDB_LIBRARY_API const crocksdb_tablefile_creation_reason_t*
+crocksdb_tablefilecreationinfo_reason(const crocksdb_tablefilecreationinfo_t*);
+extern C_ROCKSDB_LIBRARY_API const uint64_t
+crocksdb_tablefilecreationinfo_file_size(
+    const crocksdb_tablefilecreationinfo_t*);
+extern C_ROCKSDB_LIBRARY_API const crocksdb_table_properties_t*
+crocksdb_tablefilecreationinfo_table_properties(
+    const crocksdb_tablefilecreationinfo_t*);
+extern C_ROCKSDB_LIBRARY_API void crocksdb_tablefilecreationinfo_status(
+    const crocksdb_tablefilecreationinfo_t*, char** errptr);
+extern C_ROCKSDB_LIBRARY_API const char*
+crocksdb_tablefilecreationinfo_file_checksum(
+    const crocksdb_tablefilecreationinfo_t*, size_t*);
+extern C_ROCKSDB_LIBRARY_API const char*
+crocksdb_tablefilecreationinfo_checksum_func_name(
+    const crocksdb_tablefilecreationinfo_t*, size_t);
+
 /* Compaction job info */
 extern C_ROCKSDB_LIBRARY_API void crocksdb_compactionjobinfo_status(
     const crocksdb_compactionjobinfo_t* info, char** errptr);
@@ -979,6 +1010,12 @@ typedef void (*on_flush_begin_cb)(void*, crocksdb_t*,
                                   const crocksdb_flushjobinfo_t*);
 typedef void (*on_flush_completed_cb)(void*, crocksdb_t*,
                                       const crocksdb_flushjobinfo_t*);
+
+typedef void (*on_tablefile_created_cb)(
+    void*, const crocksdb_tablefilecreationinfo_t*);
+
+typedef void (*on_tablefile_deleted_cb)(
+    void*, const crocksdb_tablefiledeletioninfo_t*);
 typedef void (*on_compaction_begin_cb)(void*, crocksdb_t*,
                                        const crocksdb_compactionjobinfo_t*);
 typedef void (*on_compaction_completed_cb)(void*, crocksdb_t*,
@@ -999,6 +1036,8 @@ extern C_ROCKSDB_LIBRARY_API crocksdb_eventlistener_t*
 crocksdb_eventlistener_create(
     void* state_, void (*destructor_)(void*), on_flush_begin_cb on_flush_begin,
     on_flush_completed_cb on_flush_completed,
+    on_tablefile_created_cb on_tablefile_created,
+    on_tablefile_deleted_cb on_tablefile_deleted,
     on_compaction_begin_cb on_compaction_begin,
     on_compaction_completed_cb on_compaction_completed,
     on_subcompaction_begin_cb on_subcompaction_begin,

@@ -14,7 +14,7 @@
 use crocksdb_ffi::{
     self, CompactionReason, DBBackgroundErrorReason, DBCompactionJobInfo, DBEventListener,
     DBFlushJobInfo, DBIngestionInfo, DBInstance, DBMemTableInfo, DBStatusPtr,
-    DBSubcompactionJobInfo, DBWriteStallInfo, WriteStallCondition,
+    DBSubcompactionJobInfo, DBWriteStallInfo, WriteStallCondition, DBTableFileCreationInfo, DBTableFileCreationReason
 };
 use libc::c_void;
 use std::path::Path;
@@ -64,6 +64,62 @@ impl FlushJobInfo {
 
     pub fn smallest_seqno(&self) -> u64 {
         unsafe { crocksdb_ffi::crocksdb_flushjobinfo_smallest_seqno(&self.0) }
+    }
+}
+
+#[repr(transparent)]
+pub struct TableFileCreationInfo(DBTableFileCreationInfo);
+
+impl TableFileCreationInfo {
+    pub fn db_name(&self) -> &str {
+        unsafe { fetch_str!(crocksdb_tablefilecreationinfo_db_name(&self.0)) }
+    }
+
+    pub fn cf_name(&self) -> &str {
+        unsafe { fetch_str!(crocksdb_tablefilecreationinfo_cf_name(&self.0)) }
+    }
+
+    pub fn file_path(&self) -> &Path{
+        let p = unsafe { fetch_str!(crocksdb_tablefilecreationinfo_file_path(&self.0)) };
+        Path::new(p)
+    }
+
+    pub fn job_id(&self) -> i32 {
+        unsafe { crocksdb_ffi::crocksdb_tablefilecreationinfo_job_id(&self.0) }
+    }
+
+    pub fn reason(&self) -> DBTableFileCreationReason {
+        unsafe { crocksdb_ffi::crocksdb_tablefilecreationinfo_reason(&self.0) }
+    }
+    
+    pub fn file_size(&self) -> u64 {
+        unsafe { crocksdb_ffi::crocksdb_tablefilecreationinfo_file_size(&self.0)}
+    }
+
+    pub fn table_properties(&self) ->&TableProperties {
+        unsafe{
+            let ptr = crocksdb_ffi::crocksdb_tablefilecreationinfo_table_properties(&self.0);
+            TableProperties::from_ptr(ptr)
+        }
+    }
+
+    pub fn status(&self) -> Result<(), String> {
+        unsafe { ffi_try!(crocksdb_tablefilecreationinfo_status(&self.0)) }
+        Ok(())
+    }
+
+    pub fn file_checksum(&self) -> &[u8] {
+        let mut len = 0;
+        unsafe {
+            let ptr = crocksdb_ffi::crocksdb_tablefilecreationinfo_file_checksum(&self.0, &mut len);
+            slice::from_raw_parts(ptr as *const u8, len)
+        }
+    }
+
+    pub fn checksum_func_name(&self) -> &str {
+        unsafe {
+            fetch_str!(crocksdb_tablefilecreationinfo_checksum_func_name(&self.0))
+        }
     }
 }
 
@@ -266,6 +322,7 @@ impl MemTableInfo {
 pub trait EventListener: Send + Sync {
     fn on_flush_begin(&self, _: &FlushJobInfo) {}
     fn on_flush_completed(&self, _: &FlushJobInfo) {}
+    fn on_tablefile_created(&self, _: &TableFileCreationInfo) {}
     fn on_compaction_begin(&self, _: &CompactionJobInfo) {}
     fn on_compaction_completed(&self, _: &CompactionJobInfo) {}
     fn on_subcompaction_begin(&self, _: &SubcompactionJobInfo) {}
@@ -300,6 +357,11 @@ extern "C" fn on_flush_completed<E: EventListener>(
 ) {
     let (ctx, info) = unsafe { (&*(ctx as *mut E), &*(info as *const FlushJobInfo)) };
     ctx.on_flush_completed(info);
+}
+
+extern "C" fn on_tablefile_created<E: EventListener>(ctx: *mut c_void, info: *const DBTableFileCreationInfo) {
+    let (ctx,info) =  unsafe { (&*(ctx as *mut E), &*(info as *const TableFileCreationInfo)) };
+    ctx.on_tablefile_created(info);
 }
 
 extern "C" fn on_compaction_begin<E: EventListener>(
@@ -387,6 +449,7 @@ pub fn new_event_listener<E: EventListener>(e: E) -> *mut DBEventListener {
             destructor::<E>,
             on_flush_begin::<E>,
             on_flush_completed::<E>,
+            on_tablefile_created::<E>,
             on_compaction_begin::<E>,
             on_compaction_completed::<E>,
             on_subcompaction_begin::<E>,

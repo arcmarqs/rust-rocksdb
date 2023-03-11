@@ -154,6 +154,8 @@ using rocksdb::Statistics;
 using rocksdb::Status;
 using rocksdb::SubcompactionJobInfo;
 using rocksdb::TableFileCreationReason;
+using rocksdb::TableFileCreationInfo;
+using rocksdb::TableFileDeletionInfo;
 using rocksdb::TableProperties;
 using rocksdb::TablePropertiesCollection;
 using rocksdb::TablePropertiesCollector;
@@ -166,7 +168,6 @@ using rocksdb::WriteBufferManager;
 using rocksdb::WriteOptions;
 using rocksdb::WriteStallCondition;
 using rocksdb::WriteStallInfo;
-
 using rocksdb::BlockBasedTableFactory;
 using rocksdb::BottommostLevelCompaction;
 using rocksdb::ColumnFamilyData;
@@ -400,6 +401,19 @@ struct crocksdb_compactionjobinfo_t {
 struct crocksdb_subcompactionjobinfo_t {
   SubcompactionJobInfo rep;
 };
+
+struct crocksdb_tablefilecreationinfo_t {
+  TableFileCreationInfo rep;
+};
+
+struct crocksdb_tablefiledeletioninfo_t {
+  TableFileDeletionInfo rep;
+};
+
+struct crocksdb_tablefile_creation_info_t {
+  TableFileCreationReason rep;
+};
+
 struct crocksdb_externalfileingestioninfo_t {
   ExternalFileIngestionInfo rep;
 };
@@ -2437,6 +2451,8 @@ struct crocksdb_eventlistener_t : public EventListener {
   void (*on_flush_begin)(void*, crocksdb_t*, const crocksdb_flushjobinfo_t*);
   void (*on_flush_completed)(void*, crocksdb_t*,
                              const crocksdb_flushjobinfo_t*);
+  void (*on_tablefile_deleted)(void*, const crocksdb_tablefiledeletioninfo_t*);
+  void (*on_tablefile_created)(void*, const crocksdb_tablefilecreationinfo_t*);
   void (*on_compaction_begin)(void*, crocksdb_t*,
                               const crocksdb_compactionjobinfo_t*);
   void (*on_compaction_completed)(void*, crocksdb_t*,
@@ -2461,6 +2477,18 @@ struct crocksdb_eventlistener_t : public EventListener {
     crocksdb_t c_db = {db};
     on_flush_completed(state_, &c_db,
                        reinterpret_cast<const crocksdb_flushjobinfo_t*>(&info));
+  }
+
+  virtual void OnTableFileCreated(const TableFileCreationInfo& info) {
+    on_tablefile_created(
+        state_,
+        reinterpret_cast<const crocksdb_tablefilecreationinfo_t*>(&info));
+  }
+
+  virtual void OnTableFileDeleted(const TableFileDeletionInfo& info) {
+    on_tablefile_deleted(
+        state_,
+        reinterpret_cast<const crocksdb_tablefiledeletioninfo_t*>(&info));
   }
 
   virtual void OnCompactionBegin(DB* db, const CompactionJobInfo& info) {
@@ -2544,6 +2572,8 @@ struct crocksdb_eventlistener_t : public EventListener {
 crocksdb_eventlistener_t* crocksdb_eventlistener_create(
     void* state_, void (*destructor_)(void*), on_flush_begin_cb on_flush_begin,
     on_flush_completed_cb on_flush_completed,
+    on_tablefile_created_cb on_tablefile_created,
+    on_tablefile_deleted_cb on_tablefile_deleted,
     on_compaction_begin_cb on_compaction_begin,
     on_compaction_completed_cb on_compaction_completed,
     on_subcompaction_begin_cb on_subcompaction_begin,
@@ -2557,6 +2587,8 @@ crocksdb_eventlistener_t* crocksdb_eventlistener_create(
   et->destructor_ = destructor_;
   et->on_flush_begin = on_flush_begin;
   et->on_flush_completed = on_flush_completed;
+  et->on_tablefile_created = on_tablefile_created;
+  et->on_tablefile_deleted = on_tablefile_deleted;
   et->on_compaction_begin = on_compaction_begin;
   et->on_compaction_completed = on_compaction_completed;
   et->on_subcompaction_begin = on_subcompaction_begin;
