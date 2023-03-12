@@ -139,8 +139,8 @@ pub struct DBTablePropertiesCollectorFactory(c_void);
 pub struct DBFlushJobInfo(c_void);
 #[repr(C)]
 pub struct DBTableFileCreationInfo(c_void);
-#[repr(C)]
-pub struct DBTableFileDeletionInfo(c_void);
+/*#[repr(C)]
+pub struct DBTableFileDeletionInfo(c_void); */
 #[repr(C)]
 pub struct DBCompactionJobInfo(c_void);
 #[repr(C)]
