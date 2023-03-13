@@ -139,8 +139,8 @@ pub struct DBTablePropertiesCollectorFactory(c_void);
 pub struct DBFlushJobInfo(c_void);
 #[repr(C)]
 pub struct DBTableFileCreationInfo(c_void);
-/*#[repr(C)]
-pub struct DBTableFileDeletionInfo(c_void); */
+#[repr(C)]
+pub struct DBTableFileDeletionInfo(c_void); 
 #[repr(C)]
 pub struct DBCompactionJobInfo(c_void);
 #[repr(C)]
@@ -2336,10 +2336,26 @@ extern "C" {
         size: *mut size_t,
     ) -> *const c_char;
 
+    pub fn crocksdb_tablefiledeletioninfo_db_name(
+        info: *const DBTableFileDeletionInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefiledeletioninfo_file_path(
+        info: *const DBTableFileDeletionInfo,
+        size: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_tablefiledeletioninfo_status(
+        info: *const DBTableFileDeletionInfo,
+        errptr: *mut *mut c_char,
+    );
+    pub fn crocksdb_tablefiledeletioninfo_job_id(
+        info: *const DBTableFileDeletionInfo,
+    ) -> c_int;
     pub fn crocksdb_compactionjobinfo_status(
         info: *const DBCompactionJobInfo,
         errptr: *mut *mut c_char,
     );
+
     pub fn crocksdb_compactionjobinfo_cf_name(
         info: *const DBCompactionJobInfo,
         size: *mut size_t,
@@ -2432,6 +2448,7 @@ extern "C" {
         flush_begin: extern "C" fn(*mut c_void, *mut DBInstance, *const DBFlushJobInfo),
         flush_completed: extern "C" fn(*mut c_void, *mut DBInstance, *const DBFlushJobInfo),
         tablefile_created: extern "C" fn(*mut c_void, *const DBTableFileCreationInfo),
+        tablefile_deleted: extern "C" fn(*mut c_void, *const DBTableFileDeletionInfo),
         compact_begin: extern "C" fn(*mut c_void, *mut DBInstance, *const DBCompactionJobInfo),
         compact_completed: extern "C" fn(*mut c_void, *mut DBInstance, *const DBCompactionJobInfo),
         subcompact_begin: extern "C" fn(*mut c_void, *const DBSubcompactionJobInfo),

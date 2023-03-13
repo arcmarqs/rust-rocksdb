@@ -155,7 +155,7 @@ using rocksdb::Status;
 using rocksdb::SubcompactionJobInfo;
 using rocksdb::TableFileCreationReason;
 using rocksdb::TableFileCreationInfo;
-//using rocksdb::TableFileDeletionInfo;
+using rocksdb::TableFileDeletionInfo;
 using rocksdb::TableProperties;
 using rocksdb::TablePropertiesCollection;
 using rocksdb::TablePropertiesCollector;
@@ -406,11 +406,11 @@ struct crocksdb_tablefilecreationinfo_t {
   TableFileCreationInfo rep;
 };
 
-/*
+
 struct crocksdb_tablefiledeletioninfo_t {
   TableFileDeletionInfo rep;
 };
-*/
+
 struct crocksdb_tablefile_creation_info_t {
   TableFileCreationReason rep;
 };
@@ -2265,7 +2265,7 @@ const char* crocksdb_tablefilecreationinfo_file_path(
   return info->rep.file_path.data();
 }
 
-const int croksdb_tablefilecreationinfo_job_id(
+int crocksdb_tablefilecreationinfo_job_id(
     const crocksdb_tablefilecreationinfo_t* info) {
   return info->rep.job_id;
 }
@@ -2304,6 +2304,30 @@ const char* crocksdb_tablefilecreationinfo_checksum_func_name(
     const crocksdb_tablefilecreationinfo_t* info, size_t* size) {
   *size = info->rep.file_checksum_func_name.size();
   return info->rep.file_checksum_func_name.data();
+}
+
+/*TableFileDeletionInfo*/
+
+const char* crocksdb_tablefiledeletioninfo_db_name(
+    const crocksdb_tablefiledeletioninfo_t* info, size_t* size) {
+  *size = info->rep.db_name.size();
+  return info->rep.db_name.data();
+}
+
+const char* crocksdb_tablefiledeletioninfo_file_path(
+    const crocksdb_tablefiledeletioninfo_t* info, size_t* size) {
+  *size = info->rep.file_path.size();
+  return info->rep.file_path.data();
+}
+
+int crocksdb_tablefiledeletioninfo_job_id(
+    const crocksdb_tablefiledeletioninfo_t* info) {
+  return info->rep.job_id;
+}
+
+void crocksdb_tablefiledeletioninfo_status(
+    const crocksdb_tablefiledeletioninfo_t* info, char** errptr) {
+  SaveError(errptr, info->rep.status);
 }
 
 /* CompactionJobInfo */
@@ -2513,7 +2537,7 @@ struct crocksdb_eventlistener_t : public EventListener {
   void (*on_flush_begin)(void*, crocksdb_t*, const crocksdb_flushjobinfo_t*);
   void (*on_flush_completed)(void*, crocksdb_t*,
                              const crocksdb_flushjobinfo_t*);
-  //void (*on_tablefile_deleted)(void*, const crocksdb_tablefiledeletioninfo_t*);
+  void (*on_tablefile_deleted)(void*, const crocksdb_tablefiledeletioninfo_t*);
   void (*on_tablefile_created)(void*, const crocksdb_tablefilecreationinfo_t*);
   void (*on_compaction_begin)(void*, crocksdb_t*,
                               const crocksdb_compactionjobinfo_t*);
@@ -2547,13 +2571,12 @@ struct crocksdb_eventlistener_t : public EventListener {
         reinterpret_cast<const crocksdb_tablefilecreationinfo_t*>(&info));
   }
 
- /* virtual void OnTableFileDeleted(const TableFileDeletionInfo& info) {
+ virtual void OnTableFileDeleted(const TableFileDeletionInfo& info) {
     on_tablefile_deleted(
         state_,
         reinterpret_cast<const crocksdb_tablefiledeletioninfo_t*>(&info));
   }
-  */
-
+  
   virtual void OnCompactionBegin(DB* db, const CompactionJobInfo& info) {
     crocksdb_t c_db = {db};
     on_compaction_begin(
@@ -2636,7 +2659,7 @@ crocksdb_eventlistener_t* crocksdb_eventlistener_create(
     void* state_, void (*destructor_)(void*), on_flush_begin_cb on_flush_begin,
     on_flush_completed_cb on_flush_completed,
     on_tablefile_created_cb on_tablefile_created,
-   // on_tablefile_deleted_cb on_tablefile_deleted,
+    on_tablefile_deleted_cb on_tablefile_deleted,
     on_compaction_begin_cb on_compaction_begin,
     on_compaction_completed_cb on_compaction_completed,
     on_subcompaction_begin_cb on_subcompaction_begin,
@@ -2651,7 +2674,7 @@ crocksdb_eventlistener_t* crocksdb_eventlistener_create(
   et->on_flush_begin = on_flush_begin;
   et->on_flush_completed = on_flush_completed;
   et->on_tablefile_created = on_tablefile_created;
-  // et->on_tablefile_deleted = on_tablefile_deleted;
+  et->on_tablefile_deleted = on_tablefile_deleted;
   et->on_compaction_begin = on_compaction_begin;
   et->on_compaction_completed = on_compaction_completed;
   et->on_subcompaction_begin = on_subcompaction_begin;

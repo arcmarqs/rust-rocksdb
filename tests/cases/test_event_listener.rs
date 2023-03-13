@@ -26,6 +26,8 @@ struct EventCounter {
     flush: Arc<AtomicUsize>,
     compaction: Arc<AtomicUsize>,
     ingestion: Arc<AtomicUsize>,
+    tables_created: Arc<AtomicUsize>,
+    tables_deleted: Arc<AtomicUsize>,
     drop_count: Arc<AtomicUsize>,
     input_records: Arc<AtomicUsize>,
     output_records: Arc<AtomicUsize>,
@@ -58,6 +60,25 @@ impl EventListener for EventCounter {
         assert!(info.file_path().exists());
         assert_ne!(info.table_properties().data_size(), 0);
         self.flush.fetch_add(1, Ordering::SeqCst);
+    }
+
+    fn on_tablefile_created(&self, info: &TableFileCreationInfo) {
+        assert!(!info.cf_name().is_empty());
+        assert!(!info.db_name().is_empty());
+        assert!(info.file_path().exists());
+        assert_eq!(info.checksum_func_name(),format!("Unknown"));
+        assert!(info.job_id() > 0);
+        assert!(info.file_size() > 0);
+        assert!(info.file_checksum().is_empty());
+        assert_ne!(info.table_properties().data_size(), 0);
+        self.tables_created.fetch_add(1, Ordering::SeqCst);
+    }
+
+    fn on_tablefile_deleted(&self, info: &TableFileDeletionInfo) {
+        assert!(!info.db_name().is_empty());
+        assert!(!info.file_path().exists());
+        assert!(info.job_id() > 0);
+        self.tables_deleted.fetch_add(1, Ordering::SeqCst);
     }
 
     fn on_compaction_completed(&self, info: &CompactionJobInfo) {
@@ -214,6 +235,7 @@ fn test_event_listener_basic() {
     }
     db.flush(true).unwrap();
     assert_ne!(counter.flush.load(Ordering::SeqCst), 0);
+    assert_ne!(counter.tables_created.load(Ordering::SeqCst), 0);
 
     for i in 1..8000 {
         db.put(
@@ -225,10 +247,12 @@ fn test_event_listener_basic() {
     db.flush(true).unwrap();
     let flush_cnt = counter.flush.load(Ordering::SeqCst);
     assert_ne!(flush_cnt, 0);
+    assert_ne!(counter.tables_created.load(Ordering::SeqCst), 0);
     assert_eq!(counter.compaction.load(Ordering::SeqCst), 0);
     db.compact_range(None, None);
     assert_eq!(counter.flush.load(Ordering::SeqCst), flush_cnt);
     assert_ne!(counter.compaction.load(Ordering::SeqCst), 0);
+    assert_ne!(counter.tables_deleted.load(Ordering::SeqCst), 0);
     drop(db);
     assert_eq!(counter.drop_count.load(Ordering::SeqCst), 1);
     assert!(
