@@ -165,6 +165,9 @@ typedef struct crocksdb_writestallcondition_t crocksdb_writestallcondition_t;
 typedef struct crocksdb_map_property_t crocksdb_map_property_t;
 typedef struct crocksdb_writebatch_iterator_t crocksdb_writebatch_iterator_t;
 typedef struct crocksdb_memtableinfo_t crocksdb_memtableinfo_t;
+typedef struct crocksdb_file_checksum_gen_factory_t crocksdb_file_checksum_gen_factory_t;
+typedef struct crocksdb_file_checksum_gen_t crocksdb_file_checksum_gen_t;
+typedef struct crocksdb_file_checksum_gen_context_t crocksdb_file_checksum_gen_context_t;
 
 typedef enum crocksdb_sst_partitioner_result_t {
   kNotRequired = 0,
@@ -1464,6 +1467,7 @@ extern C_ROCKSDB_LIBRARY_API void crocksdb_options_set_compaction_style(
 extern C_ROCKSDB_LIBRARY_API void
 crocksdb_options_set_universal_compaction_options(
     crocksdb_options_t*, crocksdb_universal_compaction_options_t*);
+extern C_ROCKSDB_LIBRARY_API void crocksdb_options_file_checksum_gen_factory(crocksdb_options_t*,crocksdb_file_checksum_gen_factory_t*);
 extern C_ROCKSDB_LIBRARY_API void crocksdb_options_set_fifo_compaction_options(
     crocksdb_options_t* opt, crocksdb_fifo_compaction_options_t* fifo);
 extern C_ROCKSDB_LIBRARY_API void crocksdb_options_set_ratelimiter(
@@ -1579,6 +1583,24 @@ crocksdb_compactionfilterfactory_create(
     const char* (*name)(void*));
 extern C_ROCKSDB_LIBRARY_API void crocksdb_compactionfilterfactory_destroy(
     crocksdb_compactionfilterfactory_t*);
+
+/* File checksum gen context*/
+extern C_ROCKSDB_LIBRARY_API const char*
+crocksdb_file_checksum_gen_context_file_name(
+    crocksdb_file_checksum_gen_context_t*);
+extern C_ROCKSDB_LIBRARY_API const char*
+crocksdb_file_checksum_gen_context_requested_checksum_func_name(
+    crocksdb_file_checksum_gen_context_t*);
+
+/*File checksum gen factory*/
+extern C_ROCKSDB_LIBRARY_API crocksdb_file_checksum_gen_factory_t*
+crocksdb_file_checksum_gen_factory_create(
+    void* state, void (*destructor)(void*),
+    crocksdb_file_checksum_gen_t* (*create_file_checksum_gen_factory)(
+        void*, crocksdb_file_checksum_gen_context_t* context),
+    const char* (*name)(void*));
+extern C_ROCKSDB_LIBRARY_API void crocksdb_file_checksum_gen_factory_destroy(
+    crocksdb_file_checksum_gen_factory_t*);
 
 /* Comparator */
 

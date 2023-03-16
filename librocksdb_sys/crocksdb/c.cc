@@ -194,6 +194,8 @@ using rocksdb::TableReader;
 using rocksdb::TableReaderOptions;
 using rocksdb::VectorRepFactory;
 using rocksdb::FileChecksumGenFactory;
+using rocksdb::FileChecksumGenerator;
+using rocksdb::FileChecksumGenContext;
 
 
 using rocksdb::kMaxSequenceNumber;
@@ -507,6 +509,18 @@ struct crocksdb_compactionfilterfactory_t : public CompactionFilterFactory {
   }
 
   virtual const char* Name() const override { return (*name_)(state_); }
+};
+
+/*File checksum gen*/
+
+struct crocksdb_file_checksum_gen_factory_t : public FileChecksumGenFactory {
+void* state_;
+void(*destructor_)(void*);
+crocksdb_file_checksum_gen_t* (*create_file_checksum_gen_)(
+  void*, crocksdb_file_checksum_gen_context_t* context);
+const char* (*name_)(void*);
+
+virtual ~crocksdb_file_checksum_gen_factory_t() {(*destructor_)(state_);
 };
 
 struct crocksdb_comparator_t : public Comparator {
@@ -3006,7 +3020,8 @@ void crocksdb_options_get_compression_per_level(crocksdb_options_t* opt,
 }
 
 void crocksdb_options_set_file_checksum_gen_factory(crocksdb_options_t* opt) {
-  std::shared_ptr<FileChecksumGenFactory> factory = rocksdb::GetFileChecksumGenCrc32cFactory();
+  std::shared_ptr<FileChecksumGenFactory> factory =
+      rocksdb::GetFileChecksumGenCrc32cFactory();
   opt->rep.file_checksum_gen_factory.swap(factory);
 }
 
