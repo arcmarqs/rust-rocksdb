@@ -520,7 +520,7 @@ crocksdb_file_checksum_gen_t* (*create_file_checksum_gen_)(
   void*, crocksdb_file_checksum_gen_context_t* context);
 const char* (*name_)(void*);
 
-virtual ~crocksdb_file_checksum_gen_factory_t() {(*destructor_)(state_);
+virtual ~crocksdb_file_checksum_gen_factory_t() {(*destructor_)(state_);}
 };
 
 struct crocksdb_comparator_t : public Comparator {
