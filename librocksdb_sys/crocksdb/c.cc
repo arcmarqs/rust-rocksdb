@@ -429,6 +429,9 @@ struct crocksdb_compactionfiltercontext_t {
   CompactionFilter::Context rep;
 };
 
+struct crocksdb_file_checksum_gen_context_t {
+  FileChecksumGenContext rep;
+};
 struct crocksdb_column_family_meta_data_t {
   ColumnFamilyMetaData rep;
 };
@@ -513,6 +516,29 @@ struct crocksdb_compactionfilterfactory_t : public CompactionFilterFactory {
 
 /*File checksum gen*/
 
+struct crocksdb_file_checksum_generator_t : public FileChecksumGenerator {
+  void* state_;
+  void (*destructor_)(void*);
+  uint32_t checksum_;
+  const char* (*name_)(void*);
+  void (*update_)(void*, const char* data, size_t n);
+  void (*finalize_)(void*);
+  std::string (*get_checksum_)(void*, char** data, size_t* data_size);
+
+  virtual ~crocksdb_file_checksum_generator_t() { (*destructor_)(state_); }
+
+  virtual void Update(const char* data, size_t n) const override {
+    checksum_ 
+  }
+
+  virtual void Finalize() const override { return (*finalize_)(state_);}
+
+  virtual std::string GetChecksum() const override {
+    std::string checksum = (*get_checksum_)()
+  }
+
+  virtual const char* Name() const override { return (*name_)(state_); }
+};
 struct crocksdb_file_checksum_gen_factory_t : public FileChecksumGenFactory {
 void* state_;
 void(*destructor_)(void*);
@@ -521,6 +547,15 @@ crocksdb_file_checksum_gen_t* (*create_file_checksum_gen_)(
 const char* (*name_)(void*);
 
 virtual ~crocksdb_file_checksum_gen_factory_t() {(*destructor_)(state_);}
+
+virtual std::unique_ptr<FileChecksumGenerator> CreateFileChecksumGenerator(
+const FileChecksumGenContext& context) override {
+  crocksdb_file_checksum_gen_context_t ccontext;
+  ccontext.rep = context;
+  FileChecksumGenerator* generator = (*create_file_checksum_gen_)(state_,&ccontext);
+  return std::unique_ptr<FileChecksumGenerator>(generator);
+}
+ virtual const char* Name() const override { return (*name_)(state_); }
 };
 
 struct crocksdb_comparator_t : public Comparator {
@@ -3019,10 +3054,10 @@ void crocksdb_options_get_compression_per_level(crocksdb_options_t* opt,
   }
 }
 
-void crocksdb_options_set_file_checksum_gen_factory(crocksdb_options_t* opt) {
-  std::shared_ptr<FileChecksumGenFactory> factory =
-      rocksdb::GetFileChecksumGenCrc32cFactory();
-  opt->rep.file_checksum_gen_factory.swap(factory);
+void crocksdb_options_file_checksum_gen_factory(
+    crocksdb_options_t* opt, crocksdb_file_checksum_gen_factory_t* factory) {
+  opt->rep.file_checksum_gen_factory =
+      std::shared_ptr<FileChecksumGenFactory>(factory);
 }
 
 void crocksdb_options_set_compression_options(crocksdb_options_t* opt,

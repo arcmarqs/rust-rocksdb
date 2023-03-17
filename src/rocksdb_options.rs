@@ -1182,9 +1182,9 @@ impl DBOptions {
         }
     }
 
-    pub fn set_file_checksum_gen_factory(&mut self) {
+    pub fn file_checksum_gen_factory(&mut self) {
         unsafe {
-            crocksdb_ffi::crocksdb_options_set_file_checksum_gen_factory(self.inner);
+            crocksdb_ffi::crocksdb_options_file_checksum_gen_factory(self.inner);
         }
     }
 

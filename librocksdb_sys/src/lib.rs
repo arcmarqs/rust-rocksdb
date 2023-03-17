@@ -936,7 +936,7 @@ extern "C" {
     pub fn crocksdb_options_set_force_consistency_checks(options: *mut Options, v: bool);
     pub fn crocksdb_options_get_force_consistency_checks(options: *mut Options) -> bool;
     pub fn crocksdb_options_set_ratelimiter(options: *mut Options, limiter: *mut DBRateLimiter);
-    pub fn crocksdb_options_set_file_checksum_gen_factory(options: *mut Options);
+    pub fn crocksdb_options_file_checksum_gen_factory(options: *mut Options);
     pub fn crocksdb_options_get_ratelimiter(options: *mut Options) -> *mut DBRateLimiter;
     pub fn crocksdb_options_set_info_log(options: *mut Options, logger: *mut DBLogger);
     pub fn crocksdb_options_get_block_cache_usage(options: *const Options) -> usize;

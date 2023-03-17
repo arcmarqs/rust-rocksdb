@@ -165,9 +165,11 @@ typedef struct crocksdb_writestallcondition_t crocksdb_writestallcondition_t;
 typedef struct crocksdb_map_property_t crocksdb_map_property_t;
 typedef struct crocksdb_writebatch_iterator_t crocksdb_writebatch_iterator_t;
 typedef struct crocksdb_memtableinfo_t crocksdb_memtableinfo_t;
-typedef struct crocksdb_file_checksum_gen_factory_t crocksdb_file_checksum_gen_factory_t;
+typedef struct crocksdb_file_checksum_gen_factory_t
+    crocksdb_file_checksum_gen_factory_t;
 typedef struct crocksdb_file_checksum_gen_t crocksdb_file_checksum_gen_t;
-typedef struct crocksdb_file_checksum_gen_context_t crocksdb_file_checksum_gen_context_t;
+typedef struct crocksdb_file_checksum_gen_context_t
+    crocksdb_file_checksum_gen_context_t;
 
 typedef enum crocksdb_sst_partitioner_result_t {
   kNotRequired = 0,
