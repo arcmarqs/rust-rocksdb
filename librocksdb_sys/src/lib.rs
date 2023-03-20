@@ -195,6 +195,12 @@ pub struct DBSstPartitionerFactory(c_void);
 pub struct DBWriteBatchIterator(c_void);
 #[repr(C)]
 pub struct DBFileSystemInspectorInstance(c_void);
+#[repr(C)]
+pub struct DBFileChecksumGenerator(c_void);
+#[repr(C)]
+pub struct DBFileChecksumGeneratorFactory(c_void);
+#[repr(C)]
+pub struct DBFileChecksumGeneratorContext(c_void);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(C)]
@@ -1751,6 +1757,41 @@ extern "C" {
     ) -> *mut DBCompactionFilterFactory;
     pub fn crocksdb_compactionfilterfactory_destroy(factory: *mut DBCompactionFilterFactory);
 
+    /* File checksum generator  */
+    pub fn crocksdb_file_checksum_generator_create(
+        state: *mut c_void,
+        destructor: *mut c_void,
+        update: extern "C" fn(*mut c_void, *const u8, size_t),
+        finalize: extern "C" fn(*mut c_void),
+        get_checksum: extern "C" fn(*mut c_void) -> *mut c_char,
+        name: extern "C" fn(*mut c_void) -> *const c_char,
+    ) -> *mut DBFileChecksumGenerator;
+    pub fn crocksdb_file_checksum_gen_factory_desctroy(generator: *mut DBFileChecksumGenerator);
+
+    pub fn crocksdb_file_checksum_gen_context_file_name(
+        context: *const DBFileChecksumContext,
+        n: *mut size_t,
+    ) -> *const c_char;
+    pub fn crocksdb_file_checksum_gen_context_checksum_func_name(
+        context: *const DBFileChecksumContext,
+        n: *mut size_t,
+    ) -> *const c_char;
+
+    pub fn crocksdb_file_checksum_gen_factory_create(
+        state: *mut c_void,
+        destructor: extern "C" fn(*mut c_void),
+        create_file_checksum_generator: extern "C" fn(
+            *mut c_void,
+            *const DBFileChecksumGeneratorContext,
+        ) -> *mut DBFileChecksumGenerator,
+        name: extern "C" fn(*mut c_void) -> *const c_char,
+    ) -> *mut DBFileChecksumGeneratorFactory;
+    pub fn crocksdb_file_checksum_gen_factory_desctroy(
+        factory: *mut DBFileChecksumGeneratorFactory,
+    );
+
+    pub fn ccrocksdb_get_file_checksum_crc32c_factory() -> *mut DBFileChecksumGeneratorFactory;
+
     // Env
     pub fn crocksdb_default_env_create() -> *mut DBEnv;
     pub fn crocksdb_mem_env_create() -> *mut DBEnv;
@@ -2313,9 +2354,7 @@ extern "C" {
         info: *const DBTableFileCreationInfo,
         size: *mut size_t,
     ) -> *const c_char;
-    pub fn crocksdb_tablefilecreationinfo_job_id(
-        info: *const DBTableFileCreationInfo,
-    ) -> c_int;
+    pub fn crocksdb_tablefilecreationinfo_job_id(info: *const DBTableFileCreationInfo) -> c_int;
     pub fn crocksdb_tablefilecreationinfo_reason(
         info: *const DBTableFileCreationInfo,
     ) -> DBTableFileCreationReason;

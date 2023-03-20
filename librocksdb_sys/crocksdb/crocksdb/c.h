@@ -1595,6 +1595,7 @@ crocksdb_file_checksum_gen_context_requested_checksum_func_name(
     crocksdb_file_checksum_gen_context_t*);
 
 /*File checksum gen factory*/
+
 extern C_ROCKSDB_LIBRARY_API crocksdb_file_checksum_gen_factory_t*
 crocksdb_file_checksum_gen_factory_create(
     void* state, void (*destructor)(void*),
@@ -1603,6 +1604,12 @@ crocksdb_file_checksum_gen_factory_create(
     const char* (*name)(void*));
 extern C_ROCKSDB_LIBRARY_API void crocksdb_file_checksum_gen_factory_destroy(
     crocksdb_file_checksum_gen_factory_t*);
+extern C_ROCKSDB_LIBRARY_API const char* crocksdb_file_checksum_gen_context_file_name(
+    crocksdb_file_checksum_gen_context_t*, size_t*); 
+extern C_ROCKSDB_LIBRARY_API const char* crocksdb_file_checksum_gen_context_checksum_func_name(
+    crocksdb_file_checksum_gen_context_t*, size_t*) ;
+extern C_ROCKSDB_LIBRARY_API crocksdb_file_checksum_gen_factory_t*
+crocksdb_get_file_checksum_crc32c_factory();
 
 /* Comparator */
 

@@ -196,6 +196,7 @@ using rocksdb::VectorRepFactory;
 using rocksdb::FileChecksumGenFactory;
 using rocksdb::FileChecksumGenerator;
 using rocksdb::FileChecksumGenContext;
+using rocksdb::GetFileChecksumGenCrc32cFactory;
 
 
 using rocksdb::kMaxSequenceNumber;
@@ -519,29 +520,29 @@ struct crocksdb_compactionfilterfactory_t : public CompactionFilterFactory {
 struct crocksdb_file_checksum_generator_t : public FileChecksumGenerator {
   void* state_;
   void (*destructor_)(void*);
-  uint32_t checksum_;
   const char* (*name_)(void*);
   void (*update_)(void*, const char* data, size_t n);
   void (*finalize_)(void*);
-  std::string (*get_checksum_)(void*, char** data, size_t* data_size);
+  char* (*get_checksum_)(void*);
 
   virtual ~crocksdb_file_checksum_generator_t() { (*destructor_)(state_); }
 
-  virtual void Update(const char* data, size_t n) const override {
-    checksum_ 
+  virtual void Update(const char* data, size_t n) override {
+    (*update_)(state_, data, n);
   }
 
-  virtual void Finalize() const override { return (*finalize_)(state_);}
+  virtual void Finalize() override { (*finalize_)(state_); }
 
   virtual std::string GetChecksum() const override {
-    std::string checksum = (*get_checksum_)()
+    return (*get_checksum_)(state_);
   }
 
   virtual const char* Name() const override { return (*name_)(state_); }
 };
+
 struct crocksdb_file_checksum_gen_factory_t : public FileChecksumGenFactory {
 void* state_;
-void(*destructor_)(void*);
+void (*destructor_)(void*);
 crocksdb_file_checksum_gen_t* (*create_file_checksum_gen_)(
   void*, crocksdb_file_checksum_gen_context_t* context);
 const char* (*name_)(void*);
@@ -552,7 +553,7 @@ virtual std::unique_ptr<FileChecksumGenerator> CreateFileChecksumGenerator(
 const FileChecksumGenContext& context) override {
   crocksdb_file_checksum_gen_context_t ccontext;
   ccontext.rep = context;
-  FileChecksumGenerator* generator = (*create_file_checksum_gen_)(state_,&ccontext);
+  FileChecksumGenerator* generator = reinterpret_cast<FileChecksumGenerator*>((*create_file_checksum_gen_)(state_,&ccontext));
   return std::unique_ptr<FileChecksumGenerator>(generator);
 }
  virtual const char* Name() const override { return (*name_)(state_); }
@@ -3917,6 +3918,67 @@ crocksdb_compactionfilterfactory_t* crocksdb_compactionfilterfactory_create(
 
 void crocksdb_compactionfilterfactory_destroy(
     crocksdb_compactionfilterfactory_t* factory) {
+  delete factory;
+}
+
+/*File Checksum */
+
+crocksdb_file_checksum_generator_t* crocksdb_file_checksum_gen_create(
+    void* state, void (*destructor)(void*),
+    void (*update)(void*, const char* data, size_t n), void (*finalize)(void*),
+    char* (*get_checksum)(void*), const char* (*name)(void*)) {
+  crocksdb_file_checksum_generator_t* result =
+      new crocksdb_file_checksum_generator_t;
+  result->state_ = state;
+  result->destructor_ = destructor;
+  result->update_ = update;
+  result->finalize_ = finalize;
+  result->get_checksum_ = get_checksum;
+  result->name_ = name;
+  return result;
+}
+
+void crocksdb_file_checksum_gen_destroy(
+    crocksdb_file_checksum_generator_t* generator) {
+  delete generator;
+}
+
+const char* crocksdb_file_checksum_gen_context_file_name(
+    crocksdb_file_checksum_gen_context_t* context, size_t* n) {
+  *n = context->rep.file_name.size();
+  return context->rep.file_name.data();
+}
+
+const char* crocksdb_file_checksum_gen_context_checksum_func_name(
+    crocksdb_file_checksum_gen_context_t* context, size_t* n) {
+  *n = context->rep.requested_checksum_func_name.size();
+  return context->rep.requested_checksum_func_name.data();
+}
+
+crocksdb_file_checksum_gen_factory_t*
+crocksdb_get_file_checksum_crc32c_factory() {
+  std::shared_ptr<FileChecksumGenFactory> crc32_factory =
+      GetFileChecksumGenCrc32cFactory();
+  return reinterpret_cast<crocksdb_file_checksum_gen_factory_t*>(
+      crc32_factory.get());
+}
+
+crocksdb_file_checksum_gen_factory_t* crocksdb_file_checksum_gen_factory_create(
+    void* state, void (*destructor)(void*),
+    crocksdb_file_checksum_gen_t* (*create_file_checksum_gen)(
+        void*, crocksdb_file_checksum_gen_context_t* context),
+    const char* (*name)(void*)) {
+  crocksdb_file_checksum_gen_factory_t* result =
+      new crocksdb_file_checksum_gen_factory_t;
+  result->state_ = state;
+  result->destructor_ = destructor;
+  result->create_file_checksum_gen_ = create_file_checksum_gen;
+  result->name_ = name;
+  return result;
+}
+
+void crocksdb_file_checksum_gen_factory_destroy(
+    crocksdb_file_checksum_gen_factory_t* factory) {
   delete factory;
 }
 
