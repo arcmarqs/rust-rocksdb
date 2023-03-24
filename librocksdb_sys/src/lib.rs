@@ -1763,10 +1763,10 @@ extern "C" {
         destructor: *mut c_void,
         update: extern "C" fn(*mut c_void, *const u8, size_t),
         finalize: extern "C" fn(*mut c_void),
-        get_checksum: extern "C" fn(*mut c_void) -> *mut c_char,
+        get_checksum: extern "C" fn(*mut c_void) -> *const c_char,
         name: extern "C" fn(*mut c_void) -> *const c_char,
     ) -> *mut DBFileChecksumGenerator;
-    pub fn crocksdb_file_checksum_gen_factory_desctroy(generator: *mut DBFileChecksumGenerator);
+    pub fn crocksdb_file_checksum_gen_destroy(generator: *mut DBFileChecksumGenerator);
 
     pub fn crocksdb_file_checksum_gen_context_file_name(
         context: *const DBFileChecksumContext,
@@ -1786,7 +1786,7 @@ extern "C" {
         ) -> *mut DBFileChecksumGenerator,
         name: extern "C" fn(*mut c_void) -> *const c_char,
     ) -> *mut DBFileChecksumGeneratorFactory;
-    pub fn crocksdb_file_checksum_gen_factory_desctroy(
+    pub fn crocksdb_file_checksum_gen_factory_destroy(
         factory: *mut DBFileChecksumGeneratorFactory,
     );
 

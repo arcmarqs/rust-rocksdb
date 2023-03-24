@@ -523,7 +523,7 @@ struct crocksdb_file_checksum_generator_t : public FileChecksumGenerator {
   const char* (*name_)(void*);
   void (*update_)(void*, const char* data, size_t n);
   void (*finalize_)(void*);
-  char* (*get_checksum_)(void*);
+  const char* (*get_checksum_)(void*);
 
   virtual ~crocksdb_file_checksum_generator_t() { (*destructor_)(state_); }
 
