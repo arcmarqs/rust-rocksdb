@@ -3926,7 +3926,7 @@ void crocksdb_compactionfilterfactory_destroy(
 crocksdb_file_checksum_generator_t* crocksdb_file_checksum_gen_create(
     void* state, void (*destructor)(void*),
     void (*update)(void*, const char* data, size_t n), void (*finalize)(void*),
-    char* (*get_checksum)(void*), const char* (*name)(void*)) {
+    const char* (*get_checksum)(void*), const char* (*name)(void*)) {
   crocksdb_file_checksum_generator_t* result =
       new crocksdb_file_checksum_generator_t;
   result->state_ = state;
@@ -3944,14 +3944,12 @@ void crocksdb_file_checksum_gen_destroy(
 }
 
 const char* crocksdb_file_checksum_gen_context_file_name(
-    crocksdb_file_checksum_gen_context_t* context, size_t* n) {
-  *n = context->rep.file_name.size();
+    crocksdb_file_checksum_gen_context_t* context) {
   return context->rep.file_name.data();
 }
 
 const char* crocksdb_file_checksum_gen_context_checksum_func_name(
-    crocksdb_file_checksum_gen_context_t* context, size_t* n) {
-  *n = context->rep.requested_checksum_func_name.size();
+    crocksdb_file_checksum_gen_context_t* context) {
   return context->rep.requested_checksum_func_name.data();
 }
 

@@ -200,7 +200,7 @@ pub struct DBFileChecksumGenerator(c_void);
 #[repr(C)]
 pub struct DBFileChecksumGeneratorFactory(c_void);
 #[repr(C)]
-pub struct DBFileChecksumGeneratorContext(c_void);
+pub struct DBFileChecksumContext(c_void);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(C)]
@@ -1782,7 +1782,7 @@ extern "C" {
         destructor: extern "C" fn(*mut c_void),
         create_file_checksum_generator: extern "C" fn(
             *mut c_void,
-            *const DBFileChecksumGeneratorContext,
+            *const DBFileChecksumContext,
         ) -> *mut DBFileChecksumGenerator,
         name: extern "C" fn(*mut c_void) -> *const c_char,
     ) -> *mut DBFileChecksumGeneratorFactory;
@@ -1790,7 +1790,7 @@ extern "C" {
         factory: *mut DBFileChecksumGeneratorFactory,
     );
 
-    pub fn ccrocksdb_get_file_checksum_crc32c_factory() -> *mut DBFileChecksumGeneratorFactory;
+    pub fn crocksdb_get_file_checksum_crc32c_factory() -> *mut DBFileChecksumGeneratorFactory;
 
     // Env
     pub fn crocksdb_default_env_create() -> *mut DBEnv;
