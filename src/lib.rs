@@ -82,6 +82,7 @@ pub use table_properties_collector::TablePropertiesCollector;
 pub use table_properties_collector_factory::TablePropertiesCollectorFactory;
 pub use titan::{TitanBlobIndex, TitanDBOptions};
 pub use write_batch::{WriteBatch, WriteBatchIter, WriteBatchRef};
+pub use file_checksum::{FileChecksumGenFactory,FileChecksumContext, FileChecksumGenerator};
 
 #[allow(deprecated)]
 pub use rocksdb::Kv;
@@ -109,6 +110,7 @@ pub mod table_properties_rc;
 mod table_properties_rc_handles;
 mod titan;
 mod write_batch;
+mod file_checksum;
 
 #[cfg(test)]
 fn tempdir_with_prefix(prefix: &str) -> tempfile::TempDir {

@@ -45,6 +45,9 @@ use table_properties_collector_factory::{
 use titan::TitanDBOptions;
 use TablePropertiesCollector;
 
+use crate::FileChecksumGenFactory;
+use crate::file_checksum::new_file_checksum_gen_factory;
+
 #[derive(Default, Debug)]
 pub struct HistogramData {
     pub median: f64,
@@ -1182,9 +1185,21 @@ impl DBOptions {
         }
     }
 
-    pub fn file_checksum_gen_factory(&mut self) {
+    pub fn file_checksum_gen_factory<S,F>(&mut self,name : S, factory: F ) -> Result<(),String>
+    where
+        S: Into<Vec<u8>>,
+        F: FileChecksumGenFactory,
+    {
+        let c_name = match CString::new(name) {
+            Ok(s) => s,
+            Err(e) => return Err(format!("failed to convert to cstring: {:?}",e)),
+        };
+
         unsafe {
-            crocksdb_ffi::crocksdb_options_file_checksum_gen_factory(self.inner);
+            let factory = new_file_checksum_gen_factory(c_name, factory)?;
+            crocksdb_ffi::crocksdb_options_file_checksum_gen_factory(self.inner,factory.inner);
+            std::mem::forget(factory);
+            Ok(())
         }
     }
 

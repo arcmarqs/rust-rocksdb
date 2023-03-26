@@ -942,10 +942,13 @@ extern "C" {
     pub fn crocksdb_options_set_force_consistency_checks(options: *mut Options, v: bool);
     pub fn crocksdb_options_get_force_consistency_checks(options: *mut Options) -> bool;
     pub fn crocksdb_options_set_ratelimiter(options: *mut Options, limiter: *mut DBRateLimiter);
-    pub fn crocksdb_options_file_checksum_gen_factory(options: *mut Options);
     pub fn crocksdb_options_get_ratelimiter(options: *mut Options) -> *mut DBRateLimiter;
     pub fn crocksdb_options_set_info_log(options: *mut Options, logger: *mut DBLogger);
     pub fn crocksdb_options_get_block_cache_usage(options: *const Options) -> usize;
+    pub fn crocksdb_options_file_checksum_gen_factory(
+        options: *mut Options,
+        checksum_gen: *mut DBFileChecksumGeneratorFactory,
+    );
     pub fn crocksdb_options_set_block_cache_capacity(
         options: *const Options,
         capacity: usize,
@@ -1758,9 +1761,9 @@ extern "C" {
     pub fn crocksdb_compactionfilterfactory_destroy(factory: *mut DBCompactionFilterFactory);
 
     /* File checksum generator  */
-    pub fn crocksdb_file_checksum_generator_create(
+    pub fn crocksdb_file_checksum_gen_create(
         state: *mut c_void,
-        destructor: *mut c_void,
+        destructor: extern "C" fn(*mut c_void),
         update: extern "C" fn(*mut c_void, *const u8, size_t),
         finalize: extern "C" fn(*mut c_void),
         get_checksum: extern "C" fn(*mut c_void) -> *const c_char,
@@ -1770,11 +1773,9 @@ extern "C" {
 
     pub fn crocksdb_file_checksum_gen_context_file_name(
         context: *const DBFileChecksumContext,
-        n: *mut size_t,
     ) -> *const c_char;
     pub fn crocksdb_file_checksum_gen_context_checksum_func_name(
         context: *const DBFileChecksumContext,
-        n: *mut size_t,
     ) -> *const c_char;
 
     pub fn crocksdb_file_checksum_gen_factory_create(
@@ -1786,9 +1787,7 @@ extern "C" {
         ) -> *mut DBFileChecksumGenerator,
         name: extern "C" fn(*mut c_void) -> *const c_char,
     ) -> *mut DBFileChecksumGeneratorFactory;
-    pub fn crocksdb_file_checksum_gen_factory_destroy(
-        factory: *mut DBFileChecksumGeneratorFactory,
-    );
+    pub fn crocksdb_file_checksum_gen_factory_destroy(factory: *mut DBFileChecksumGeneratorFactory);
 
     pub fn crocksdb_get_file_checksum_crc32c_factory() -> *mut DBFileChecksumGeneratorFactory;
 
