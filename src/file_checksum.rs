@@ -69,14 +69,6 @@ impl Drop for FileChecksumGenHandle {
     }
 }
 
-pub unsafe fn new_checksum_generator<H: FileChecksumGenerator>(
-    checksum_func_name: CString,
-    generator: H,
-) -> FileChecksumGenHandle {
-    let checksum_gen = new_file_checksum_gen_raw(checksum_func_name, generator);
-    FileChecksumGenHandle { inner: checksum_gen }
-}
-
 unsafe fn new_file_checksum_gen_raw<H: FileChecksumGenerator>(
     checksum_func_name: CString,
     generator: H,
@@ -209,7 +201,7 @@ mod tests {
 
     use crate::{
         ColumnFamilyOptions,FileChecksumContext,FileChecksumGenerator,FileChecksumGenFactory,
-        DBOptions, Writable, DB,
+        DBOptions, Writable, DB, WriteOptions,
     };
 
     struct FileChecksumHashGen {
@@ -263,11 +255,27 @@ mod tests {
         let factory = Factory {};
         let name = CString::new("CustomChecksumFuncFactory").unwrap();
         opts.create_if_missing(true);
-        opts.file_checksum_gen_factory::<CString,Factory>(name,factory);
+        opts.file_checksum_gen_factory::<CString, Factory>(name, factory);
+        let mut cf_opts = ColumnFamilyOptions::new();
+        cf_opts.set_disable_auto_compactions(true);
+        let db = DB::open_cf(
+            opts,
+            "./store",
+            vec![("default", cf_opts)],
+        )
+        .unwrap();
 
-        let db = DB::open(opts, "./store").unwrap();
-
-        db.put(b"1",b"2");
+        db.put(b"1", b"2");
         db.flush(true);
+
+        let cf_handle = db.cf_handle("default").unwrap();
+        let live = db.get_column_family_meta_data(cf_handle);
+        let ssts = live.get_level(0).get_files();
+        for sst in ssts {
+            assert!(sst.get_checksum().len() > 0);
+            assert_eq!(sst.get_checksum_function(),format!("CustomChecksumFunc"));
+        }
     }
 }
+
+

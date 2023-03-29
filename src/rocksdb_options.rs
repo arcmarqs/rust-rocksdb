@@ -1184,7 +1184,14 @@ impl DBOptions {
             crocksdb_ffi::crocksdb_options_set_ratelimiter(self.inner, rate_limiter.inner);
         }
     }
-
+    pub fn default_file_checksum_gen_factory(&self) -> Result<(),String> {
+        unsafe {
+            let factory =  crocksdb_ffi::crocksdb_get_file_checksum_crc32c_factory();
+            crocksdb_ffi::crocksdb_options_file_checksum_gen_factory(self.inner,factory);
+            std::mem::forget(factory);
+            Ok(())
+        }
+    }
     pub fn file_checksum_gen_factory<S,F>(&mut self,name : S, factory: F ) -> Result<(),String>
     where
         S: Into<Vec<u8>>,
